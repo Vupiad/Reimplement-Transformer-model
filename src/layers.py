@@ -92,6 +92,7 @@ class EncoderLayer(nn.Module):
         Lưu ý: module self_attn sẽ được import từ attention.py sau khi hoàn thiện.
         """
         super().__init__()
+        self.size = d_model
         self.self_attn = self_attn
         self.feed_forward = feed_forward
         
@@ -149,6 +150,7 @@ class DecoderLayer(nn.Module):
         Khởi tạo DecoderLayer.
         """
         super().__init__()
+        self.size = d_model
         self.self_attn = self_attn
         self.src_attn = src_attn
         self.feed_forward = feed_forward
@@ -225,9 +227,16 @@ class EncoderDecoder(nn.Module):
         self.generator = generator  
 
     def forward(self, src, tgt, src_mask, tgt_mask):
-        return self.decode(
-                self.encode(src, src_mask), src_mask, tgt, tgt_mask
-            )
+        # Bước 1: Mã hóa câu nguồn
+        memory = self.encode(src, src_mask)
+        
+        # Bước 2: Giải mã
+        decoder_output = self.decode(memory, src_mask, tgt, tgt_mask)
+        
+        # Bước 3: Đẩy qua Generator để biến thành xác suất phân bố từ vựng (Khắc phục lỗi shape ở đây)
+        final_output = self.generator(decoder_output)
+        
+        return final_output
 
     def encode(self, src, src_mask):
         return self.encoder(self.src_embed(src), src_mask)
