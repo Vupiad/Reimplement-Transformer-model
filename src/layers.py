@@ -5,15 +5,15 @@ import torch.nn.functional as F
 
 class PositionwiseFeedForward(nn.Module):
     """
-    Triển khai mạng Position-wise Feed-Forward Network [cite: 148-149].
-    Bao gồm hai phép biến đổi tuyến tính với hàm kích hoạt ReLU ở giữa [cite: 149-150].
+    Triển khai mạng Position-wise Feed-Forward Network.
+    Bao gồm hai phép biến đổi tuyến tính với hàm kích hoạt ReLU ở giữa.
     """
     def __init__(self, d_model=512, d_ff=2048, dropout=0.1):
         super().__init__()
-        # Mở rộng chiều dữ liệu lên d_ff (thường là 2048) [cite: 154]
+        # Mở rộng chiều dữ liệu lên d_ff (thường là 2048)
         self.linear1 = nn.Linear(d_model, d_ff)
         
-        # Thu hẹp chiều dữ liệu về lại d_model (thường là 512) [cite: 154]
+        # Thu hẹp chiều dữ liệu về lại d_model (thường là 512)
         self.linear2 = nn.Linear(d_ff, d_model)
         
         self.relu = nn.ReLU()
@@ -21,7 +21,7 @@ class PositionwiseFeedForward(nn.Module):
 
     def forward(self, x):
         """
-        Công thức: FFN(x) = max(0, xW1 + b1)W2 + b2 [cite: 151-152]
+        Công thức: FFN(x) = max(0, xW1 + b1)W2 + b2
         """
         # Đưa qua lớp tuyến tính 1, áp dụng ReLU và Dropout
         x = self.dropout(self.relu(self.linear1(x)))
@@ -31,7 +31,7 @@ class PositionwiseFeedForward(nn.Module):
 
 class LayerNorm(nn.Module):
     """
-    Lớp chuẩn hóa Layer Normalization[cite: 82].
+    Lớp chuẩn hóa Layer Normalization.
     Giúp dữ liệu không bị khuếch đại quá lớn hay thu nhỏ quá mức khi đi qua nhiều lớp mạng,
     bằng cách đưa phân phối dữ liệu về trung bình 0 và độ lệch chuẩn 1.
     """
@@ -59,7 +59,7 @@ class LayerNorm(nn.Module):
     
 class SublayerConnection(nn.Module): 
     """
-    Lớp kết nối tắt (Residual Connection) kết hợp với Layer Normalization và Dropout [cite: 82-83, 224-225].
+    Lớp kết nối tắt (Residual Connection) kết hợp với Layer Normalization và Dropout.
     Đóng vai trò như "hệ tuần hoàn" giúp luồng đạo hàm không bị triệt tiêu khi mạng quá sâu.
     """
     def __init__(self, size, dropout):
@@ -67,7 +67,7 @@ class SublayerConnection(nn.Module):
         # Khởi tạo module LayerNorm đã định nghĩa ở trên
         self.norm = LayerNorm(size)
         
-        # Áp dụng Dropout để chống hiện tượng quá khớp (Overfitting) [cite: 224]
+        # Áp dụng Dropout để chống hiện tượng quá khớp (Overfitting)
         self.dropout = nn.Dropout(dropout)  
 
     def forward(self, x, sublayer):
@@ -83,20 +83,19 @@ class SublayerConnection(nn.Module):
 
 class EncoderLayer(nn.Module):
     """
-    Triển khai một lớp Encoder hoàn chỉnh [cite: 80-84].
-    Bao gồm: Multi-Head Self-Attention và Position-wise Feed-Forward[cite: 81].
+    Triển khai một lớp Encoder hoàn chỉnh.
+    Bao gồm: Multi-Head Self-Attention và Position-wise Feed-Forward.
     """
     def __init__(self, d_model, self_attn, feed_forward, dropout=0.1):
         """
         Khởi tạo EncoderLayer.
-        Lưu ý: module self_attn sẽ được import từ attention.py sau khi hoàn thiện.
         """
         super().__init__()
         self.size = d_model
         self.self_attn = self_attn
         self.feed_forward = feed_forward
         
-        # Lớp chuẩn hóa (Layer Normalization) cho 2 sub-layers [cite: 82-83]
+        # Lớp chuẩn hóa (Layer Normalization) cho 2 sub-layers
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         
@@ -109,24 +108,24 @@ class EncoderLayer(nn.Module):
             mask: Tensor dùng để che các vị trí padding (padding mask)
         """
         # --- Sub-layer 1: Multi-Head Self-Attention ---
-        # Trong self-attention, Query, Key, Value đều đến từ cùng một x [cite: 142]
+        # Trong self-attention, Query, Key, Value đều đến từ cùng một x
         attn_output = self.self_attn(query=x, key=x, value=x, mask=mask)
         
-        # Residual connection và Layer Normalization: LayerNorm(x + Sublayer(x)) [cite: 82-83]
-        # Dropout được áp dụng vào output của sub-layer trước khi cộng và chuẩn hóa [cite: 224]
+        # Residual connection và Layer Normalization: LayerNorm(x + Sublayer(x))
+        # Dropout được áp dụng vào output của sub-layer trước khi cộng và chuẩn hóa
         x = self.norm1(x + self.dropout(attn_output))
         
         # --- Sub-layer 2: Position-wise Feed-Forward ---
         ff_output = self.feed_forward(x)
         
-        # Residual connection và Layer Normalization [cite: 82-83]
+        # Residual connection và Layer Normalization
         x = self.norm2(x + self.dropout(ff_output))
         
         return x
     
 class Encoder(nn.Module):
     """
-    Tập hợp N=6 lớp EncoderLayer thành một khối Encoder hoàn chỉnh [cite: 80-84].
+    Tập hợp N=6 lớp EncoderLayer thành một khối Encoder hoàn chỉnh.
     """
     def __init__(self, layer, N=6):
         super(Encoder, self).__init__()
@@ -142,8 +141,8 @@ class Encoder(nn.Module):
 
 class DecoderLayer(nn.Module):
     """
-    Triển khai một lớp Decoder hoàn chỉnh [cite: 85-89].
-    Bao gồm: Masked Self-Attention, Encoder-Decoder Attention và Feed-Forward[cite: 86].
+    Triển khai một lớp Decoder hoàn chỉnh.
+    Bao gồm: Masked Self-Attention, Encoder-Decoder Attention và Feed-Forward.
     """
     def __init__(self, d_model, self_attn, src_attn, feed_forward, dropout=0.1):
         """
@@ -155,7 +154,7 @@ class DecoderLayer(nn.Module):
         self.src_attn = src_attn
         self.feed_forward = feed_forward
         
-        # Lớp chuẩn hóa (Layer Normalization) cho 3 sub-layers [cite: 86-87]
+        # Lớp chuẩn hóa (Layer Normalization) cho 3 sub-layers
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.norm3 = nn.LayerNorm(d_model)
@@ -168,16 +167,16 @@ class DecoderLayer(nn.Module):
             x: Tensor từ phía target (đang tạo ra)
             memory: Tensor output của khối Encoder (chứa thông tin của câu gốc)
             src_mask: Mask che phần padding của câu gốc
-            tgt_mask: Mask che phần padding và che các token tương lai (look-ahead mask) [cite: 88-89]
+            tgt_mask: Mask che phần padding và che các token tương lai (look-ahead mask)
         """
         # --- Sub-layer 1: Masked Multi-Head Self-Attention ---
-        # Masking đảm bảo các dự đoán cho vị trí i chỉ dựa vào các vị trí đã biết nhỏ hơn i [cite: 88-89]
+        # Masking đảm bảo các dự đoán cho vị trí i chỉ dựa vào các vị trí đã biết nhỏ hơn i
         attn_output = self.self_attn(query=x, key=x, value=x, mask=tgt_mask)
         x = self.norm1(x + self.dropout(attn_output))
         
         # --- Sub-layer 2: Encoder-Decoder Attention ---
-        # Queries đến từ lớp Decoder trước đó, Keys và Values đến từ output của Encoder (memory) [cite: 139]
-        # Cho phép mỗi vị trí trong Decoder chú ý đến toàn bộ chuỗi đầu vào [cite: 140]
+        # Queries đến từ lớp Decoder trước đó, Keys và Values đến từ output của Encoder (memory)
+        # Cho phép mỗi vị trí trong Decoder chú ý đến toàn bộ chuỗi đầu vào
         attn_output2 = self.src_attn(query=x, key=memory, value=memory, mask=src_mask)
         x = self.norm2(x + self.dropout(attn_output2))
         
@@ -189,7 +188,7 @@ class DecoderLayer(nn.Module):
     
 class Decoder(nn.Module):
     """ 
-    Tập hợp N=6 lớp DecoderLayer thành một khối Decoder hoàn chỉnh [cite: 85-89].
+    Tập hợp N=6 lớp DecoderLayer thành một khối Decoder hoàn chỉnh.
     """
 
     def __init__(self, layer, N=6):
