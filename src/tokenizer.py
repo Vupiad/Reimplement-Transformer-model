@@ -43,3 +43,4 @@ class TransformerTokenizer:
         """
         return self.tokenizer.decode(token_ids, skip_special_tokens=False)
 
+

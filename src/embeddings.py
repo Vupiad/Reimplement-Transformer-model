@@ -52,10 +52,9 @@ class TransformerEmbedding(nn.Module):
         self.token_emb = nn.Embedding(vocab_size, d_model)
         
         # The positional encoding matrix P [cite: 115]
-        self.pos_emb = PositionalEncoding(d_model, max_len)
-        
-        # Dropout is commonly added here to prevent overfitting
-        self.dropout = nn.Dropout(p=dropout)
+        self.pos_emb = PositionalEncoding(d_model, max_len)\
+            
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, input_ids):
         # 1. Convert integer token IDs to dense vectors (X_tok) [cite: 77-80]
@@ -64,6 +63,25 @@ class TransformerEmbedding(nn.Module):
         # 2. Add sinusoidal positional information (X = X_tok + P) 
         x = self.pos_emb(x)
         
-        return self.dropout(x)
+        return x
 
-
+# --- Quick Test Block ---
+if __name__ == "__main__":
+    # Test parameters mirroring a standard BERT-base configuration [cite: 88, 273]
+    vocab_size = 30522  
+    d_model = 10      
+    
+    # Initialize the embedding layer
+    embedding_layer = TransformerEmbedding(vocab_size=vocab_size, d_model=d_model)
+    
+    # Simulate a batch of 2 sentences, each with 20 tokens
+    # Shape: (batch_size=2, sequence_length=20)
+    sample_input_ids = torch.randint(0, vocab_size, (2, 10)) 
+    
+    # Pass the IDs through the layer
+    output_embeddings = embedding_layer(sample_input_ids)
+    
+    print("Input IDs shape (Batch, Seq_Len):", sample_input_ids)
+    print("Output Embeddings shape (Batch, Seq_Len, d_model):", output_embeddings.shape)
+    print("\n")
+    print(embedding_layer.forward(sample_input_ids))
